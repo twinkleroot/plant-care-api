@@ -1,0 +1,21 @@
+# 서버 포트 설정
+server:
+  port: 8080 # 로컬에서 실행될 서버 포트
+
+# 스프링 설정
+spring:
+  # 데이터베이스 설정 (로컬 MySQL 기준)
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/plant_care_app?useSSL=false&allowPublicKeyRetrieval=true
+    username: root # 로컬 DB 사용자 이름 (본인 환경에 맞게 수정)
+    password: rhflffk # 로컬 DB 비밀번호 (본인 환경에 맞게 수정)
+
+  # JPA(ORM) 설정
+  jpa:
+    hibernate:
+      ddl-auto: update # 애플리케이션 실행 시 엔티티에 맞춰 테이블 구조 자동 변경 (개발용)
+    properties:
+      hibernate:
+        show_sql: true # 실행되는 SQL 쿼리를 로그로 보여줌
+        format_sql: true # SQL 로그를 예쁘게 포맷팅
