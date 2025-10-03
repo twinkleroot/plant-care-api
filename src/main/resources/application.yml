@@ -19,3 +19,13 @@ spring:
       hibernate:
         show_sql: true # 실행되는 SQL 쿼리를 로그로 보여줌
         format_sql: true # SQL 로그를 예쁘게 포맷팅
+
+# JWT 설정
+jwt:
+  secret: "hello plant care app we are the world" # ❗️반드시 아무도 모르는 긴 문자열로 변경하세요.
+  expiration-time: 86400000 # 토큰 유효 기간 (24시간, 밀리초 단위)
+
+# Kakao API 설정
+kakao:
+  api:
+    url: [https://kapi.kakao.com](https://kapi.kakao.com)
