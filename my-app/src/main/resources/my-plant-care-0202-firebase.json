@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "my-plant-care-0202",
+  "private_key_id": "469893a0c3d6fabb7a851686bf662e14ddfa885c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDGBH0J1qQyVkYL\nitmiD749GK0i17Gyb9egaukLLA8AxKfz4hfjbHd7tn0K28MrVsOkN0Onjc8iNRrf\nnbMvn9AmTjmddHnlA3GBn01akGwfCMQe6wND2zcnIF7AF3ZEDXitoPH5Z4T5Uggn\nrKbENubylyhO8u8aNev9JXnIFmTiy0+sKwlMaRvnMZVNbIY/EVjO2D9bKeTFdgfM\nROYzhcUaxkcNMfxguK8aVZGLxY+jcx5rw+AROyfp26WwdIuR1ZHk2PbfdC7LUiWF\nn8VzJZhxA1hv4DCilAxikRcPqUkzH7kuXaFEtExeIvKpyF8OwzeglurYClUqJAB9\nDyFW5NazAgMBAAECggEAAnx08MYun+krDk210iM+IWM+wpS7COv+5Oc4D36unjUE\njNCBD0cXMEjyxKD3ZYMR3W0fiX+DeGulROXPJaEX38Xp/Zru8DFSYAJsL1+9KR3s\nOcfRQy1XQcOrcjWj3lKIT4Run/yCPrpzxW0VV5pUMlCJM4XjpaHEBD96X3OUhwUT\nztAfXe61hds0T5PVbKfAa5f24IZTAmcjEm16SCSGR6sBR8NVgvdXruZoopuc8g3T\nMvkz9oWGnpXQkdHZ4eaGKUGicbtVOdx2cuVWqnQJWWPQFFlRGNNeSIjGVTwWBLu8\nKbZNa9M+cWuSdG44FIO10D0pwMxhOzOd2BlOLQ5SmQKBgQDh7oDbrstqNstnjFin\nUqgL1UXukblJQK0D280xf73Sg6ihZIqjLtKhZbcP/CKk4UvPJezOgmgSG18RQLse\nAizjeSLdY/91/zgOR6oz9Z5RSSzH+VvIIy9ebDXuWagXMrIkpGcW/AcJ9qybklhN\ngoFubzbdCvA3NMk0btg83u4MKQKBgQDgXvNJjCtsVz6QCEd223PNq9PQw6xiQPej\nreyfMpIl3X7wqLjKFwg68y10b+BzScUFSfeMbq3Pgr/WWiBLQnp1+AnHwEhmf1oj\nDocZ+zW45JX27T3ni77ESiIO1Uwl+d4VGY5GAVO6mdvob4jMnSyu60bbDHoxK7FG\nNPRHcqznewKBgDvH/Qaj6KURHJ8ojqivgVGoPBnVKz7Lwzv7I/9N+q9CMROLY/er\nwwX7wQWUxKH2DzYfpdo6vUjVP0F0bE6TasdB3UzRUd4qCu4UXl/jROHjR9seCwAY\n90a3wUlxJb4Fpwd1DOYTB9XGFIQRpBXWS2MqQE0awNcKu5aJIeRxZHGJAoGAbKyw\ny/vPgH9Vdy/7ZU9v7LuAMcrE8SYkjCwOwyEcdqis9mXSc1fqjZsBdjdGELE3c5Nb\nCrMFDtB2mJ04rRs68267VfwFVVfz0a0UtPnfEHnvRRWt+TvPn4WEr4iShIZdEf05\n0yCLbINfZ1q2eNzcKrEctbZ6bNyL1cSKWRzrMIcCgYAURRfUderdrGnKZvzB4dXL\nCDT4wg0aBrRG55GKTBPQImgxG2ANK38YAz6vDG95BSBQDf8hbZ+Ji46btGz8AVpC\n3c8oZ6DWnOI8u+VlAv93k/TiAo+e0jzSxjVa3emA3QG+JoCyGnO7ckmbmgacng69\ngWrqtpI+OyUZbEPSMa77zQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@my-plant-care-0202.iam.gserviceaccount.com",
+  "client_id": "115057694063642741553",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40my-plant-care-0202.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
