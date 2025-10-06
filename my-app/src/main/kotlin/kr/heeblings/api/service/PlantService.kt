@@ -39,11 +39,14 @@ class PlantService(
             // 오늘 물을 줘야 하는지 확인 (D-day가 0이거나 과거일 경우)
             val isWateringNeeded = nextWateringDDay != null && nextWateringDDay <= 0
 
+            // 각 식물의 파일 이름을 사용하여 실시간으로 Pre-signed URL 생성
+            val preSignedUrl = plant.imageUrl?.let { s3UploadService.generatePreSignedUrl(it) }
+
             // Entity -> DTO 변환
             PlantListResponse(
                 plantId = plant.plantId,
                 nickname = plant.nickname,
-                imageUrl = plant.imageUrl,
+                imageUrl = preSignedUrl,
                 startDate = plant.startDate,
                 dDay = dDay,
                 lastWateredDate = plant.lastWateredDate,
@@ -75,11 +78,14 @@ class PlantService(
         val nextWateringDDay = plant.nextWateringDate?.let { ChronoUnit.DAYS.between(today, it) }
         val isWateringNeeded = nextWateringDDay != null && nextWateringDDay <= 0
 
+        // DB에 저장된 파일 이름(plant.imageUrl)을 사용하여 실시간으로 Pre-signed URL 생성
+        val preSignedUrl = plant.imageUrl?.let { s3UploadService.generatePreSignedUrl(it) }
+
         // Entity를 상세 응답 DTO로 변환하여 반환
         return PlantDetailResponse(
             plantId = plant.plantId,
             nickname = plant.nickname,
-            imageUrl = plant.imageUrl,
+            imageUrl = preSignedUrl,
             plantType = plant.plantType,
             startDate = plant.startDate,
             dDay = dDay,
@@ -102,13 +108,13 @@ class PlantService(
             .orElseThrow { EntityNotFoundException("ID가 ${userId}인 사용자를 찾을 수 없습니다.") }
 
         // 이미지 파일이 있으면 S3에 업로드하고 URL을 가져옴
-        val imageUrl = imageFile?.let { s3UploadService.upload(it) }
+        val imageFileName = imageFile?.let { s3UploadService.upload(it) }
 
         // DTO를 바탕으로 새로운 Plant 엔티티를 생성합니다.
         val newPlant = Plant(
             user = user,
             nickname = request.nickname,
-            imageUrl = imageUrl,    // S3 URL 또는 null
+            imageUrl = imageFileName,
             plantType = request.plantType,
             startDate = request.startDate,
             lastWateredDate = request.lastWateredDate,
@@ -151,14 +157,12 @@ class PlantService(
         // 이미지 파일이 새로 들어오면 기존 이미지를 삭제하고 새 이미지로 대체합니다.
         imageFile?.let { newFile ->
             // 1. 기존 이미지가 있다면 S3에서 삭제
-            plant.imageUrl?.let { oldImageUrl ->
-                s3UploadService.delete(oldImageUrl)
+            plant.imageUrl?.let { oldImageFileName ->
+                s3UploadService.delete(oldImageFileName)
             }
             // 2. 새 이미지를 업로드하고 URL을 업데이트
             plant.imageUrl = s3UploadService.upload(newFile)
         }
-
-        val oldPlantType = plant.plantType
 
         // 기본 정보 먼저 업데이트
         request.nickname?.let { plant.nickname = it }
@@ -168,6 +172,7 @@ class PlantService(
         request.lastRepottedDate?.let { plant.lastRepottedDate = it }
 
         // plantType이 새로 입력되었거나 변경되었는지 확인
+        val oldPlantType = plant.plantType
         val newPlantType = request.plantType
         if (newPlantType != null && newPlantType != oldPlantType) {
             // 위키 테이블에서 식물 정보 조회
@@ -224,6 +229,11 @@ class PlantService(
 
         if (plant.user.userId != userId) {
             throw AccessDeniedException("해당 식물에 대한 접근 권한이 없습니다.")
+        }
+
+        // DB에서 식물 정보를 삭제하기 전에, S3에 이미지가 있다면 먼저 삭제합니다.
+        plant.imageUrl?.let { imageFileName ->
+            s3UploadService.delete(imageFileName)
         }
 
         // 소유권이 확인되면 ID를 기준으로 식물 데이터를 삭제합니다.
