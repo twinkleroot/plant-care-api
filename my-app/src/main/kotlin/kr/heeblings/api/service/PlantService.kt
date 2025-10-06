@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import java.nio.file.AccessDeniedException
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -22,6 +23,7 @@ class PlantService(
     private val plantRepository: PlantRepository,
     private val plantUserRepository: PlantUserRepository,
     private val plantTypeWikiRepository: PlantTypeWikiRepository,
+    private val s3UploadService: S3UploadService,
 ) {
     @Transactional(readOnly = true)
     fun getPlantList(userId: Long, pageable: Pageable): Page<PlantListResponse> {
@@ -94,16 +96,19 @@ class PlantService(
 
     // 데이터를 생성하므로 @Transactional 어노테이션이 필요합니다.
     @Transactional
-    fun createPlant(userId: Long, request: PlantCreateRequest): PlantDetailResponse {
+    fun createPlant(userId: Long, request: PlantCreateRequest, imageFile: MultipartFile?): PlantDetailResponse {
         // 요청한 사용자를 찾습니다.
         val user = plantUserRepository.findById(userId)
             .orElseThrow { EntityNotFoundException("ID가 ${userId}인 사용자를 찾을 수 없습니다.") }
+
+        // 이미지 파일이 있으면 S3에 업로드하고 URL을 가져옴
+        val imageUrl = imageFile?.let { s3UploadService.upload(it) }
 
         // DTO를 바탕으로 새로운 Plant 엔티티를 생성합니다.
         val newPlant = Plant(
             user = user,
             nickname = request.nickname,
-            imageUrl = request.imageUrl,
+            imageUrl = imageUrl,    // S3 URL 또는 null
             plantType = request.plantType,
             startDate = request.startDate,
             lastWateredDate = request.lastWateredDate,
@@ -134,13 +139,23 @@ class PlantService(
 
     // 데이터를 수정하므로 @Transactional 어노테이션이 필요합니다.
     @Transactional
-    fun updatePlant(userId: Long, plantId: Long, request: PlantUpdateRequest): PlantDetailResponse {
+    fun updatePlant(userId: Long, plantId: Long, request: PlantUpdateRequest, imageFile: MultipartFile?): PlantDetailResponse {
         // 상세 조회 로직과 동일하게 식물을 찾고, 소유권을 확인합니다.
         val plant = plantRepository.findById(plantId)
             .orElseThrow { EntityNotFoundException("ID가 ${plantId}인 식물을 찾을 수 없습니다.") }
 
         if (plant.user.userId != userId) {
             throw AccessDeniedException("해당 식물에 대한 접근 권한이 없습니다.")
+        }
+
+        // 이미지 파일이 새로 들어오면 기존 이미지를 삭제하고 새 이미지로 대체합니다.
+        imageFile?.let { newFile ->
+            // 1. 기존 이미지가 있다면 S3에서 삭제
+            plant.imageUrl?.let { oldImageUrl ->
+                s3UploadService.delete(oldImageUrl)
+            }
+            // 2. 새 이미지를 업로드하고 URL을 업데이트
+            plant.imageUrl = s3UploadService.upload(newFile)
         }
 
         val oldPlantType = plant.plantType
