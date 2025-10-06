@@ -65,4 +65,5 @@ hs_err_pid*
 replay_pid*
 
 **/application.yml
+**/application-*.yml
 **/my-plant-care-0202-firebase.json
