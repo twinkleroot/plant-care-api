@@ -19,7 +19,12 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
-                it.requestMatchers("/auth/**", "/health", "/webhooks/**").permitAll() // 로그인/가입, 헬스 체크, 웹훅 API는 모두 허용
+                it.requestMatchers(
+                    "/plant-app/auth/**",      // 화초앱 로그인/가입 API
+                    "/plant-app/webhooks/**",  // 화초앱 카카오 연결 해제 웹훅
+                    "/health"                  // 공통 헬스 체크 API
+                    // TODO: 나중에 채팅앱이 추가되면 "/chat-app/auth/**" 와 같이 추가
+                ).permitAll()
                     .anyRequest().authenticated() // 나머지 모든 요청은 인증 필요
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)

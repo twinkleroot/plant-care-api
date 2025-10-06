@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.security.Principal
 
 @RestController
-@RequestMapping("/api/plants")
+@RequestMapping("/plant-app/plants")
 class PlantController(private val plantService: PlantService) {
     @GetMapping
     fun getPlantList(principal: Principal, pageable: Pageable): ResponseEntity<Page<PlantListResponse>> {
