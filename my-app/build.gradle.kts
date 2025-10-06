@@ -23,6 +23,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
+    // AWS S3 연동을 위한 Spring Cloud AWS Starter
+    implementation(platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1"))
+    implementation("io.awspring.cloud:spring-cloud-aws-starter-s3")
+
+    // 이미지 리사이징을 위한 Thumbnailator 라이브러리
+    implementation("net.coobird:thumbnailator:0.4.20")
+
     implementation(project(":common"))
     implementation("com.google.firebase:firebase-admin:9.2.0")
     runtimeOnly("com.mysql:mysql-connector-j")

@@ -11,10 +11,11 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import java.security.Principal
 
 @RestController
-@RequestMapping("/plant-app/plants")
+@RequestMapping("/api/plants")
 class PlantController(private val plantService: PlantService) {
     @GetMapping
     fun getPlantList(principal: Principal, pageable: Pageable): ResponseEntity<Page<PlantListResponse>> {
@@ -32,27 +33,29 @@ class PlantController(private val plantService: PlantService) {
         return ResponseEntity.ok(plantDetail)
     }
 
-    @PostMapping
+    @PostMapping(consumes = ["multipart/form-data"]) // multipart/form-data 타입만 허용
     fun createPlant(
         principal: Principal,
-        @Valid @RequestBody request: PlantCreateRequest // @Valid로 DTO의 유효성 검사 활성화
+        @RequestPart("request") @Valid request: PlantCreateRequest,
+        @RequestPart("image", required = false) imageFile: MultipartFile?
     ): ResponseEntity<PlantDetailResponse> {
         val userId = principal.name.toLong()
 //        var userId = 1L; // 테스트용
-        val createdPlant = plantService.createPlant(userId, request)
+        val createdPlant = plantService.createPlant(userId, request, imageFile)
         // 성공적으로 생성되었음을 의미하는 201 Created 상태 코드와 함께 생성된 리소스를 반환합니다.
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPlant)
     }
 
-    @PutMapping("/{plantId}")
+    @PutMapping("/{plantId}", consumes = ["multipart/form-data"])
     fun updatePlant(
         principal: Principal,
         @PathVariable plantId: Long,
-        @RequestBody request: PlantUpdateRequest // 요청 Body의 JSON을 DTO로 변환
+        @RequestPart("request") request: PlantUpdateRequest,
+        @RequestPart("image", required = false) imageFile: MultipartFile?
     ): ResponseEntity<PlantDetailResponse> {
         val userId = principal.name.toLong()
 //        var userId = 1L; // 테스트용
-        val updatedPlant = plantService.updatePlant(userId, plantId, request)
+        val updatedPlant = plantService.updatePlant(userId, plantId, request, imageFile)
         return ResponseEntity.ok(updatedPlant)
     }
 
