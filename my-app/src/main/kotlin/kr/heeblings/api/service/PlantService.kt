@@ -1,14 +1,11 @@
 package kr.heeblings.api.service
 
-import kr.heeblings.api.dto.PlantCreateRequest
-import kr.heeblings.api.dto.PlantDetailResponse
-import kr.heeblings.api.dto.PlantListResponse
-import kr.heeblings.api.dto.PlantUpdateRequest
 import kr.heeblings.api.repository.PlantRepository
 import kr.heeblings.api.repository.PlantTypeWikiRepository
 import kr.heeblings.api.repository.PlantUserRepository
 import jakarta.persistence.EntityNotFoundException
 import kr.heeblings.api.domain.Plant
+import kr.heeblings.api.dto.*
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -26,13 +23,21 @@ class PlantService(
     private val s3UploadService: S3UploadService,
 ) {
     @Transactional(readOnly = true)
+    fun getPlantTypeWikiList(): List<PlantTypeWikiResponse> {
+        // 모든 위키 데이터를 찾아 DTO로 변환하여 반환
+        return plantTypeWikiRepository.findAll().map { wiki ->
+            PlantTypeWikiResponse(plantTypeName = wiki.plantTypeName)
+        }
+    }
+
+    @Transactional(readOnly = true)
     fun getPlantList(userId: Long, pageable: Pageable): Page<PlantListResponse> {
         val plantPage = plantRepository.findByUserUserId(userId, pageable)
         val today = LocalDate.now()
 
         return plantPage.map { plant ->
             // D-day 계산 로직
-            val dDay = ChronoUnit.DAYS.between(plant.startDate, today)
+            val decisionDay = ChronoUnit.DAYS.between(plant.startDate, today)
 
             val nextWateringDDay = plant.nextWateringDate?.let { ChronoUnit.DAYS.between(today, it) }
 
@@ -48,7 +53,7 @@ class PlantService(
                 nickname = plant.nickname,
                 imageUrl = preSignedUrl,
                 startDate = plant.startDate,
-                dDay = dDay,
+                decisionDay = decisionDay,
                 lastWateredDate = plant.lastWateredDate,
                 nextWateringDate = plant.nextWateringDate,
                 nextWateringDDay = nextWateringDDay,
@@ -73,7 +78,7 @@ class PlantService(
 
         // 리스트 조회 로직과 동일하게 D-day 등 계산
         val today = LocalDate.now()
-        val dDay = ChronoUnit.DAYS.between(plant.startDate, today)
+        val decisionDay = ChronoUnit.DAYS.between(plant.startDate, today)
 
         val nextWateringDDay = plant.nextWateringDate?.let { ChronoUnit.DAYS.between(today, it) }
         val isWateringNeeded = nextWateringDDay != null && nextWateringDDay <= 0
@@ -88,7 +93,7 @@ class PlantService(
             imageUrl = preSignedUrl,
             plantType = plant.plantType,
             startDate = plant.startDate,
-            dDay = dDay,
+            decisionDay = decisionDay,
             lastWateredDate = plant.lastWateredDate,
             nextWateringDate = plant.nextWateringDate,
             nextWateringDDay = nextWateringDDay,

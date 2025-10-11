@@ -10,11 +10,6 @@ import org.springframework.data.repository.query.Param
 import java.time.LocalDate
 
 interface PlantRepository : JpaRepository<Plant, Long> {
-    @Query(
-        value = "SELECT * FROM plants p WHERE p.user_id = :userId",
-        countQuery = "SELECT count(*) FROM plants p WHERE p.user_id = :userId",
-        nativeQuery = true
-    )
     fun findByUserUserId(@Param("userId") userId: Long, pageable: Pageable): Page<Plant>
 
     @Query(

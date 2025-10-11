@@ -1,6 +1,7 @@
 package kr.heeblings.api.domain
 
 import jakarta.persistence.*
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "plant_users") // 테이블명을 users -> plant_users로 변경
@@ -13,5 +14,7 @@ class PlantUser(
 
     var nickname: String?,
 
-    var fcmToken: String?
+    var fcmToken: String?,
+
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
 )

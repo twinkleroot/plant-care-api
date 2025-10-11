@@ -9,7 +9,7 @@ data class PlantListResponse(
     val nickname: String?,
     val imageUrl: String?,
     val startDate: LocalDate,
-    val dDay: Long, // 키우기 시작한 지 며칠 됐는지
+    val decisionDay: Long, // 키우기 시작한 지 며칠 됐는지
     val lastWateredDate: LocalDate?,
     val nextWateringDate: LocalDate?, // 다음에 물 줘야 할 날짜
     val nextWateringDDay: Long?, // 다음 물 주는 날까지 남은 날
@@ -24,7 +24,7 @@ data class PlantDetailResponse(
     val imageUrl: String?,
     val plantType: String?,
     val startDate: LocalDate,
-    val dDay: Long,
+    val decisionDay: Long,
     val lastWateredDate: LocalDate?,
     val nextWateringDate: LocalDate?,
     val nextWateringDDay: Long?,
@@ -59,4 +59,8 @@ data class PlantCreateRequest(
     val careInfo: String?,
     val description: String?,
     val wateringCycleDays: Int?
+)
+
+data class PlantTypeWikiResponse(
+    val plantTypeName: String
 )

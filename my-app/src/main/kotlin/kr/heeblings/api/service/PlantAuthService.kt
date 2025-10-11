@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClient
+import java.time.LocalDateTime
 
 @Service
 class PlantAuthService(
@@ -35,6 +36,7 @@ class PlantAuthService(
             )
         } else { // 기존 회원 로그인
             user.nickname = userInfo.properties.nickname // 닉네임 변경 시 업데이트
+            user.updatedAt = LocalDateTime.now() // 최근 로그인 시간으로 업데이트
         }
 
         val appToken = jwtTokenProvider.generateToken(user.userId)
