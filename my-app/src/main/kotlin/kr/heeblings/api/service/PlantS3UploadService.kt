@@ -1,43 +1,33 @@
 package kr.heeblings.api.service
 
 import io.awspring.cloud.s3.S3Template
-import net.coobird.thumbnailator.Thumbnails
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.time.Duration
 import java.util.*
 
 @Service
-class S3UploadService(
+class PlantS3UploadService(
     private val s3Template: S3Template
 ) {
     @Value("\${s3.bucket}")
     private lateinit var bucketName: String
 
-    private val MAX_WIDTH = 1024
-
+    // 이 메서드는 이제 URL 대신, S3에 저장된 '파일 이름(Key)'을 반환합니다.
     fun upload(file: MultipartFile): String {
         val originalFilename = file.originalFilename ?: "image.jpg"
         val extension = originalFilename.substringAfterLast(".", "")
         val randomFileName = "${UUID.randomUUID()}.$extension"
 
-        val resizedImageBytes = ByteArrayOutputStream().use { outputStream ->
-            Thumbnails.of(file.inputStream)
-                .width(MAX_WIDTH)
-                .toOutputStream(outputStream)
-            outputStream.toByteArray()
-        }
-
+        // 이미지 리사이징 로직을 제거하고, 받은 파일을 그대로 업로드합니다.
         s3Template.upload(
             bucketName,
             randomFileName,
-            ByteArrayInputStream(resizedImageBytes)
+            file.inputStream
         )
 
-        return randomFileName
+        return randomFileName // URL 대신 파일 이름 반환
     }
 
     // 파일 이름을 받아, 1시간 동안 유효한 Pre-signed URL을 생성합니다.

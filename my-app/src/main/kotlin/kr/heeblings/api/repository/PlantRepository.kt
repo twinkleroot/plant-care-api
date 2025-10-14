@@ -12,10 +12,7 @@ import java.time.LocalDate
 interface PlantRepository : JpaRepository<Plant, Long> {
     fun findByUserUserId(@Param("userId") userId: Long, pageable: Pageable): Page<Plant>
 
-    @Query(
-        value = "SELECT DISTINCT p.user_id FROM plants p WHERE p.next_watering_date = :date",
-//        countQuery = "SELECT count(DISTINCT p.user_id) FROM plants p WHERE p.next_watering_date = :date",
-        nativeQuery = true
-    )
+    @Query("SELECT DISTINCT p.user FROM Plant p WHERE p.nextWateringDate <= :date")
     fun findUsersWithPlantsToWaterToday(@Param("date") date: LocalDate): List<PlantUser>
+
 }

@@ -20,7 +20,7 @@ class PlantService(
     private val plantRepository: PlantRepository,
     private val plantUserRepository: PlantUserRepository,
     private val plantTypeWikiRepository: PlantTypeWikiRepository,
-    private val s3UploadService: S3UploadService,
+    private val plantS3UploadService: PlantS3UploadService,
 ) {
     @Transactional(readOnly = true)
     fun getPlantTypeWikiList(): List<PlantTypeWikiResponse> {
@@ -45,7 +45,7 @@ class PlantService(
             val isWateringNeeded = nextWateringDDay != null && nextWateringDDay <= 0
 
             // 각 식물의 파일 이름을 사용하여 실시간으로 Pre-signed URL 생성
-            val preSignedUrl = plant.imageUrl?.let { s3UploadService.generatePreSignedUrl(it) }
+            val preSignedUrl = plant.imageUrl?.let { plantS3UploadService.generatePreSignedUrl(it) }
 
             // Entity -> DTO 변환
             PlantListResponse(
@@ -84,7 +84,7 @@ class PlantService(
         val isWateringNeeded = nextWateringDDay != null && nextWateringDDay <= 0
 
         // DB에 저장된 파일 이름(plant.imageUrl)을 사용하여 실시간으로 Pre-signed URL 생성
-        val preSignedUrl = plant.imageUrl?.let { s3UploadService.generatePreSignedUrl(it) }
+        val preSignedUrl = plant.imageUrl?.let { plantS3UploadService.generatePreSignedUrl(it) }
 
         // Entity를 상세 응답 DTO로 변환하여 반환
         return PlantDetailResponse(
@@ -113,7 +113,7 @@ class PlantService(
             .orElseThrow { EntityNotFoundException("ID가 ${userId}인 사용자를 찾을 수 없습니다.") }
 
         // 이미지 파일이 있으면 S3에 업로드하고 URL을 가져옴
-        val imageFileName = imageFile?.let { s3UploadService.upload(it) }
+        val imageFileName = imageFile?.let { plantS3UploadService.upload(it) }
 
         // DTO를 바탕으로 새로운 Plant 엔티티를 생성합니다.
         val newPlant = Plant(
@@ -163,10 +163,10 @@ class PlantService(
         imageFile?.let { newFile ->
             // 1. 기존 이미지가 있다면 S3에서 삭제
             plant.imageUrl?.let { oldImageFileName ->
-                s3UploadService.delete(oldImageFileName)
+                plantS3UploadService.delete(oldImageFileName)
             }
             // 2. 새 이미지를 업로드하고 URL을 업데이트
-            plant.imageUrl = s3UploadService.upload(newFile)
+            plant.imageUrl = plantS3UploadService.upload(newFile)
         }
 
         // 기본 정보 먼저 업데이트
@@ -238,7 +238,7 @@ class PlantService(
 
         // DB에서 식물 정보를 삭제하기 전에, S3에 이미지가 있다면 먼저 삭제합니다.
         plant.imageUrl?.let { imageFileName ->
-            s3UploadService.delete(imageFileName)
+            plantS3UploadService.delete(imageFileName)
         }
 
         // 소유권이 확인되면 ID를 기준으로 식물 데이터를 삭제합니다.

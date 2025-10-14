@@ -31,12 +31,13 @@ class PlantAuthService(
                 PlantUser(
                     kakaoId = userInfo.id,
                     nickname = userInfo.properties.nickname,
-                    fcmToken = null
+                    fcmToken = request.fcmToken
                 )
             )
         } else { // 기존 회원 로그인
             user.nickname = userInfo.properties.nickname // 닉네임 변경 시 업데이트
             user.updatedAt = LocalDateTime.now() // 최근 로그인 시간으로 업데이트
+            user.fcmToken = request.fcmToken
         }
 
         val appToken = jwtTokenProvider.generateToken(user.userId)
