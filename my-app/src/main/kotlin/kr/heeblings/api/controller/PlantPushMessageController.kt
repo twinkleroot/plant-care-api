@@ -19,6 +19,14 @@ class PlantPushMessageController(
         return ResponseEntity.ok(messages)
     }
 
+    // 읽지 않은 메시지 상태 조회
+    @GetMapping("/unread-status")
+    fun hasUnreadMessages(principal: Principal): ResponseEntity<Map<String, Boolean>> {
+        val userId = principal.name.toLong()
+        val hasUnread = pushMessageService.hasUnreadMessages(userId)
+        return ResponseEntity.ok(mapOf("hasUnread" to hasUnread))
+    }
+
     // 메시지 확인(읽음) 처리
     @PutMapping("/{messageId}/read")
     fun markAsRead(principal: Principal, @PathVariable messageId: Long): ResponseEntity<PlantPushMessage> {

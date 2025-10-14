@@ -17,7 +17,9 @@ class NotificationService(
 ) {
     // TODO : 매일 오전 9시 (KST 기준)에 실행
 //    @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
-    // 테스트를 위해 1분마다 실행
+    // 테스트를 위해 5분마다 실행
+//    @Scheduled(cron = "0 */5 * * * *", zone = "Asia/Seoul")
+    // 1분 마다 실행
     @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
     fun sendWateringReminders() {
         val today = LocalDate.now()

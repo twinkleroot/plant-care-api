@@ -41,7 +41,7 @@ springBoot {
     mainClass.set("kr.heeblings.api.MyAppApplicationKt")
 }
 
-// ❗️ bootJar 태스크를 실행한 후, 그 결과물(JAR)과 .ebextensions 폴더를 함께 묶어
+// bootJar 태스크를 실행한 후, 그 결과물(JAR)과 .ebextensions 폴더를 함께 묶어
 // Elastic Beanstalk가 요구하는 구조의 ZIP 파일을 생성하는 새로운 'buildZip' 태스크를 정의합니다.
 tasks.register<Zip>("buildZip") {
     dependsOn(tasks.bootJar) // bootJar가 먼저 실행되도록 합니다.

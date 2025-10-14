@@ -16,6 +16,11 @@ class PlantPushMessageService(
         return pushMessageRepository.findTop10ByUserUserIdAndIsReadFalseOrderByCreatedAtDesc(userId)
     }
 
+    // 읽지 않은 메시지 존재 여부 확인
+    fun hasUnreadMessages(userId: Long): Boolean {
+        return pushMessageRepository.existsByUserUserIdAndIsReadFalse(userId)
+    }
+
     // 메시지 읽음 처리
     @Transactional
     fun markAsRead(userId: Long, messageId: Long): PlantPushMessage {
