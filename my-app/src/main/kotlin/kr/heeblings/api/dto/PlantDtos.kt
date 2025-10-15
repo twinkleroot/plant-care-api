@@ -8,6 +8,7 @@ data class PlantListResponse(
     val plantId: Long,
     val nickname: String?,
     val imageUrl: String?,
+    val imageStatus: String?,
     val startDate: LocalDate,
     val decisionDay: Long, // 키우기 시작한 지 며칠 됐는지
     val lastWateredDate: LocalDate?,
@@ -22,6 +23,7 @@ data class PlantDetailResponse(
     val plantId: Long,
     val nickname: String?,
     val imageUrl: String?,
+    val imageStatus: String?,
     val plantType: String?,
     val startDate: LocalDate,
     val decisionDay: Long,

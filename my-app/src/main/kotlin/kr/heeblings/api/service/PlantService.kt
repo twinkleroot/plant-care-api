@@ -21,6 +21,7 @@ class PlantService(
     private val plantUserRepository: PlantUserRepository,
     private val plantTypeWikiRepository: PlantTypeWikiRepository,
     private val plantS3UploadService: PlantS3UploadService,
+    private val plantImageProcessingService: PlantImageProcessingService, // ❗️ 비동기 서비스 주입
 ) {
     @Transactional(readOnly = true)
     fun getPlantTypeWikiList(): List<PlantTypeWikiResponse> {
@@ -52,6 +53,7 @@ class PlantService(
                 plantId = plant.plantId,
                 nickname = plant.nickname,
                 imageUrl = preSignedUrl,
+                imageStatus = plant.imageStatus,
                 startDate = plant.startDate,
                 decisionDay = decisionDay,
                 lastWateredDate = plant.lastWateredDate,
@@ -91,6 +93,7 @@ class PlantService(
             plantId = plant.plantId,
             nickname = plant.nickname,
             imageUrl = preSignedUrl,
+            imageStatus = plant.imageStatus,
             plantType = plant.plantType,
             startDate = plant.startDate,
             decisionDay = decisionDay,
@@ -112,14 +115,13 @@ class PlantService(
         val user = plantUserRepository.findById(userId)
             .orElseThrow { EntityNotFoundException("ID가 ${userId}인 사용자를 찾을 수 없습니다.") }
 
-        // 이미지 파일이 있으면 S3에 업로드하고 URL을 가져옴
-        val imageFileName = imageFile?.let { plantS3UploadService.upload(it) }
-
         // DTO를 바탕으로 새로운 Plant 엔티티를 생성합니다.
+        // 1. 이미지 URL을 null로 하여 식물 정보를 먼저 DB에 저장하고 ID를 확보합니다.
         val newPlant = Plant(
             user = user,
             nickname = request.nickname,
-            imageUrl = imageFileName,
+            imageUrl = null, // 이미지는 나중에 비동기로 업데이트되므로 일단 null로 저장
+            imageStatus = if (imageFile != null) "PROCESSING" else "COMPLETE", // 상태 설정
             plantType = request.plantType,
             startDate = request.startDate,
             lastWateredDate = request.lastWateredDate,
@@ -144,7 +146,12 @@ class PlantService(
         // 생성된 엔티티를 데이터베이스에 저장합니다.
         val savedPlant = plantRepository.save(newPlant)
 
-        // 저장된 식물의 상세 정보를 DTO로 변환하여 반환합니다.
+        // 2. 이미지 파일이 있다면, 비동기 업로드를 '요청'합니다. (결과를 기다리지 않음)
+        imageFile?.let {
+            plantImageProcessingService.uploadAndSetImageUrl(userId, savedPlant.plantId, it)
+        }
+
+        // 3. 이미지 업로드 완료를 기다리지 않고, 즉시 사용자에게 응답합니다.
         return getPlantDetail(userId, savedPlant.plantId)
     }
 
@@ -165,8 +172,11 @@ class PlantService(
             plant.imageUrl?.let { oldImageFileName ->
                 plantS3UploadService.delete(oldImageFileName)
             }
-            // 2. 새 이미지를 업로드하고 URL을 업데이트
-            plant.imageUrl = plantS3UploadService.upload(newFile)
+            // 2. DB의 이미지 URL을 null로 임시 저장합니다.
+            plant.imageUrl = null
+            plant.imageStatus = "PROCESSING" // 상태 설정
+            // 3. 새 이미지의 비동기 업로드를 '요청'합니다.
+            plantImageProcessingService.uploadAndSetImageUrl(userId, plantId, newFile)
         }
 
         // 기본 정보 먼저 업데이트

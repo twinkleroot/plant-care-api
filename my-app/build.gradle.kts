@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "kr.heeblings"
-version = "0.0.2-SNAPSHOT"
+version = "0.0.4-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
@@ -18,6 +18,8 @@ repositories {
 }
 
 dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -41,15 +43,21 @@ springBoot {
     mainClass.set("kr.heeblings.api.MyAppApplicationKt")
 }
 
-// bootJar 태스크를 실행한 후, 그 결과물(JAR)과 .ebextensions 폴더를 함께 묶어
-// Elastic Beanstalk가 요구하는 구조의 ZIP 파일을 생성하는 새로운 'buildZip' 태스크를 정의합니다.
+// bootJar 태스크를 실행한 후, 그 결과물(JAR)과 .platform 폴더를 함께 묶어
+// Elastic Beanstalk가 요구하는 구조의 ZIP 파일을 생성하는 'buildZip' 태스크를 정의합니다.
 tasks.register<Zip>("buildZip") {
     dependsOn(tasks.bootJar) // bootJar가 먼저 실행되도록 합니다.
-    from(tasks.bootJar.get().archiveFile) // 생성된 JAR 파일을 ZIP에 포함합니다.
-    from("../.ebextensions") { // ❗️ 프로젝트 루트의 .ebextensions 폴더를
-        into(".ebextensions") // ZIP 파일 최상위의 .ebextensions 폴더로 복사합니다.
+
+    // bootJar의 결과물인 JAR 파일의 이름을 'application.jar'로 변경하여 ZIP 파일의 최상위에 복사합니다.
+    from(tasks.bootJar.get().archiveFile) {
+        rename { "application.jar" }
     }
-    archiveFileName.set("heeblings-backend.zip") // 생성될 ZIP 파일의 이름을 지정합니다.
+    // ❗️ 프로젝트 루트의 .platform 폴더를 ZIP 파일 최상위의 .platform 폴더로 복사합니다.
+    from(file("${rootProject.projectDir}/.platform")) {
+        into(".platform")
+    }
+
+    archiveFileName.set("heeblings-backend.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
 }
 

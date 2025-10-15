@@ -15,6 +15,7 @@ class Plant(
 
     var nickname: String?,
     var imageUrl: String?,
+    var imageStatus: String? = "COMPLETE",
     var plantType: String?,
 
     @Column(nullable = false)

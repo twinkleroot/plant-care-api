@@ -23,7 +23,10 @@ dependencyManagement {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-security")
+    // JwtTokenProvider에 필요한 최소한의 의존성만 남깁니다.
+    implementation("org.springframework.security:spring-security-core") // org.springframework -> org.springframework.security
+    implementation("org.springframework:spring-context")
+
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-validation")
