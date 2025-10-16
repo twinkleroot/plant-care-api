@@ -1,6 +1,7 @@
 package kr.heeblings.api.service
 
 import io.awspring.cloud.s3.S3Template
+import kr.heeblings.common.utils.log
 import net.coobird.thumbnailator.Thumbnails
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -53,9 +54,9 @@ class PlantS3UploadService(
     fun delete(fileName: String) {
         try {
             s3Template.deleteObject(bucketName, fileName)
-            println("S3에서 이미지 삭제 성공: $fileName")
+            log.debug("S3에서 이미지 삭제 성공: $fileName")
         } catch (e: Exception) {
-            println("S3 이미지 삭제 중 에러 발생: ${e.message}")
+            log.error("S3 이미지 삭제 중 에러 발생: ${e.message}")
         }
     }
 }

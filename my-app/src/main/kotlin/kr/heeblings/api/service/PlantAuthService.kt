@@ -7,6 +7,7 @@ import kr.heeblings.api.domain.PlantUser
 import kr.heeblings.api.dto.KakaoUserInfoResponse
 import kr.heeblings.api.dto.PlantAuthResponse
 import kr.heeblings.api.dto.PlantKakaoLoginRequest
+import kr.heeblings.common.utils.log
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -68,14 +69,13 @@ class PlantAuthService(
             if (kakaoId != null) {
                 plantUserRepository.findByKakaoId(kakaoId)?.let {
                     plantUserRepository.delete(it)
-                    println("사용자(kakaoId: $kakaoId)의 연결 해제로 인한 데이터 삭제 완료.")
-                } ?: println("연결 해제 요청: 사용자(kakaoId: $kakaoId)를 찾을 수 없음.")
+                    log.info("사용자(kakaoId: $kakaoId)의 연결 해제로 인한 데이터 삭제 완료.")
+                } ?: log.info("연결 해제 요청: 사용자(kakaoId: $kakaoId)를 찾을 수 없음.")
             } else {
-                println("웹훅 페이로드의 events.subject.sub 에서 사용자 ID를 찾을 수 없습니다. Decoded Payload: $decodedPayload")
+                log.info("웹훅 페이로드의 events.subject.sub 에서 사용자 ID를 찾을 수 없습니다. Decoded Payload: $decodedPayload")
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            println("카카오 웹훅 JWT 파싱 실패: ${e.message}")
+            log.error("카카오 웹훅 JWT 파싱 실패: ${e.message}")
         }
     }
 

@@ -52,3 +52,11 @@ kakao:
 firebase:
   service-account-path: FIREBASE_SERVICE_ACCOUNT_PATH
 
+logging:
+  level:
+    # 전역 로그 레벨: INFO 레벨 이상의 로그만 출력
+    root: INFO
+    # 우리 앱 패키지(kr.heeblings)에 대해서는 INFO 레벨의 상세한 로그까지 모두 출력
+    kr.heeblings: INFO
+    # Hibernate가 생성하는 SQL 로그는 너무 길어지므로 INFO 레벨로 제한 (필요시 DEBUG로 변경)
+    org.hibernate.SQL: INFO

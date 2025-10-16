@@ -7,6 +7,7 @@ import kr.heeblings.api.domain.PlantPushMessage
 import kr.heeblings.api.domain.PlantUser
 import kr.heeblings.api.repository.PlantPushMessageRepository
 import kr.heeblings.api.repository.PlantRepository
+import kr.heeblings.common.utils.log
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -14,21 +15,21 @@ import java.time.LocalDate
 @Service
 class NotificationService(
     private val plantRepository: PlantRepository,
-    private val pushMessageRepository: PlantPushMessageRepository
+    private val pushMessageRepository: PlantPushMessageRepository,
 ) {
-    // TODO : 매일 오전 9시 (KST 기준)에 실행
+    // 매일 오전 9시 (KST 기준)에 실행
     @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
     // 테스트를 위해 5분마다 실행
 //    @Scheduled(cron = "0 */5 * * * *", zone = "Asia/Seoul")
-    // 1분 마다 실행
+    // 테스트를 위해 1분 마다 실행
 //    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
     fun sendWateringReminders() {
         val today = LocalDate.now()
-        println("[$today] 물주기 알림 스케줄러 실행...")
+        log.info("[$today] 물주기 알림 스케줄러 실행...")
 
         val usersToNotify = plantRepository.findUsersWithPlantsToWaterToday(today)
         if (usersToNotify.isEmpty()) {
-            println("알림을 보낼 사용자가 없습니다.")
+            log.info("알림을 보낼 사용자가 없습니다.")
             return
         }
 
@@ -51,7 +52,7 @@ class NotificationService(
 
                 try {
                     val response = FirebaseMessaging.getInstance().send(message)
-                    println("알림 발송 성공: UserID=${user.userId}, MessageID=$response")
+                    log.info("알림 발송 성공: UserID=${user.userId}, MessageID=$response")
 
                     val pushMessage = PlantPushMessage(
                         user = user,
@@ -59,9 +60,8 @@ class NotificationService(
                         body = body
                     )
                     pushMessageRepository.save(pushMessage)
-
                 } catch (e: Exception) {
-                    println("알림 발송 실패: UserID=${user.userId}, Token=$token, Error=${e.message}")
+                    log.error("알림 발송 실패: UserID=${user.userId}, Token=$token, Error=${e.message}")
                     // TODO: 실패한 토큰은 DB에서 삭제하는 등의 후처리 로직 추가 가능
                 }
             }
@@ -80,9 +80,9 @@ class NotificationService(
 
             try {
                 val response = FirebaseMessaging.getInstance().send(message)
-                println("Image process complete, message send success : UserID=${user.userId}, MessageID=$response")
+                log.debug("Image process complete, message send success : UserID=${user.userId}, MessageID=$response")
             } catch (e: Exception) {
-                println("이미지 처리 완료 메시지 발송 실패: UserID=${user.userId}, Error=${e.message}")
+                log.error("이미지 처리 완료 메시지 발송 실패: UserID=${user.userId}, Error=${e.message}")
             }
         }
     }

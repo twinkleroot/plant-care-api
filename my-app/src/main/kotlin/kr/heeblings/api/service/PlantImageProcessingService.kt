@@ -1,6 +1,7 @@
 package kr.heeblings.api.service
 
 import kr.heeblings.api.repository.PlantRepository
+import kr.heeblings.common.utils.log
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -27,7 +28,7 @@ class PlantImageProcessingService(
 
             plant.imageUrl = imageFileName
             plant.imageStatus = "COMPLETE"
-            println("async image upload success: plantId = $plantId")
+            log.debug("async image upload success: plantId = $plantId")
 
             // 이제 plant.user 객체는 완전히 로드된 상태이므로 안전합니다.
             notificationService.sendImageProcessedMessage(plant.user, plantId)
@@ -36,8 +37,8 @@ class PlantImageProcessingService(
                 plant.imageStatus = "FAILED" // 상태를 '실패'로 변경
             }
             // 에러를 더 명확하게 로깅합니다.
-            e.printStackTrace()
-            println("async image upload failed: plantId = $plantId, error: ${e.message}")
+            log.debug(e.toString())
+            log.error("async image upload failed: plantId = $plantId, error: ${e.message}")
         }
     }
 }
