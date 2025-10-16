@@ -21,7 +21,7 @@ class PlantService(
     private val plantUserRepository: PlantUserRepository,
     private val plantTypeWikiRepository: PlantTypeWikiRepository,
     private val plantS3UploadService: PlantS3UploadService,
-    private val plantImageProcessingService: PlantImageProcessingService, // ❗️ 비동기 서비스 주입
+    private val plantImageProcessingService: PlantImageProcessingService, //️ 비동기 서비스 주입
 ) {
     @Transactional(readOnly = true)
     fun getPlantTypeWikiList(): List<PlantTypeWikiResponse> {
@@ -37,8 +37,7 @@ class PlantService(
         val today = LocalDate.now()
 
         return plantPage.map { plant ->
-            // D-day 계산 로직
-            val decisionDay = ChronoUnit.DAYS.between(plant.startDate, today)
+            val decisionDay = ChronoUnit.DAYS.between(plant.startDate, today)   // D-day 계산
 
             val nextWateringDDay = plant.nextWateringDate?.let { ChronoUnit.DAYS.between(today, it) }
 
@@ -48,7 +47,6 @@ class PlantService(
             // 각 식물의 파일 이름을 사용하여 실시간으로 Pre-signed URL 생성
             val preSignedUrl = plant.imageUrl?.let { plantS3UploadService.generatePreSignedUrl(it) }
 
-            // Entity -> DTO 변환
             PlantListResponse(
                 plantId = plant.plantId,
                 nickname = plant.nickname,
@@ -60,7 +58,8 @@ class PlantService(
                 nextWateringDate = plant.nextWateringDate,
                 nextWateringDDay = nextWateringDDay,
                 isWateringNeeded = isWateringNeeded,
-                lastRepottedDate = plant.lastRepottedDate
+                lastRepottedDate = plant.lastRepottedDate,
+                plantType = plant.plantType,
             )
         }
     }
@@ -148,7 +147,7 @@ class PlantService(
 
         // 2. 이미지 파일이 있다면, 비동기 업로드를 '요청'합니다. (결과를 기다리지 않음)
         imageFile?.let {
-            plantImageProcessingService.uploadAndSetImageUrl(userId, savedPlant.plantId, it)
+            plantImageProcessingService.uploadAndSetImageUrl(savedPlant.plantId, it)
         }
 
         // 3. 이미지 업로드 완료를 기다리지 않고, 즉시 사용자에게 응답합니다.
@@ -166,48 +165,50 @@ class PlantService(
             throw AccessDeniedException("해당 식물에 대한 접근 권한이 없습니다.")
         }
 
-        // 이미지 파일이 새로 들어오면 기존 이미지를 삭제하고 새 이미지로 대체합니다.
-        imageFile?.let { newFile ->
-            // 1. 기존 이미지가 있다면 S3에서 삭제
-            plant.imageUrl?.let { oldImageFileName ->
-                plantS3UploadService.delete(oldImageFileName)
-            }
-            // 2. DB의 이미지 URL을 null로 임시 저장합니다.
-            plant.imageUrl = null
-            plant.imageStatus = "PROCESSING" // 상태 설정
-            // 3. 새 이미지의 비동기 업로드를 '요청'합니다.
-            plantImageProcessingService.uploadAndSetImageUrl(userId, plantId, newFile)
-        }
+        // 텍스트/날짜 정보 업데이트 로직
+        plant.nickname = request.nickname
+        plant.startDate = request.startDate
+        plant.lastWateredDate = request.lastWateredDate
+        plant.lastRepottedDate = request.lastRepottedDate
+        plant.description = request.description
+        plant.careInfo = request.careInfo
 
-        // 기본 정보 먼저 업데이트
-        request.nickname?.let { plant.nickname = it }
-        request.imageUrl?.let { plant.imageUrl = it }
-        request.startDate?.let { plant.startDate = it }
-        request.lastWateredDate?.let { plant.lastWateredDate = it }
-        request.lastRepottedDate?.let { plant.lastRepottedDate = it }
-
-        // plantType이 새로 입력되었거나 변경되었는지 확인
         val oldPlantType = plant.plantType
         val newPlantType = request.plantType
         if (newPlantType != null && newPlantType != oldPlantType) {
-            // 위키 테이블에서 식물 정보 조회
             plantTypeWikiRepository.findByPlantTypeName(newPlantType)?.let { wiki ->
-                plant.plantType = newPlantType // plantType도 업데이트
-                // 조회된 정보로 식물 엔티티 업데이트
+                plant.plantType = newPlantType
                 plant.wateringCycleDays = wiki.wateringCycleDays
-                plant.description = wiki.description
-                plant.careInfo = wiki.careInfo
+                // 사용자가 직접 입력한 설명이 없다면 위키 정보로 채움
+                if (request.description.isNullOrEmpty()) {
+                    plant.description = wiki.description
+                }
+                if (request.careInfo.isNullOrEmpty()) {
+                    plant.careInfo = wiki.careInfo
+                }
             } ?: run {
-                plant.plantType = newPlantType // plantType은 업데이트하되, 정보는 초기화
-                // 위키에 정보가 없는 경우, 기존 정보를 초기화
+                plant.plantType = newPlantType
                 plant.wateringCycleDays = null
-                plant.description = null
-                plant.careInfo = null
+                // 직접 입력한 종류는 위키 정보가 없으므로 비워둠
+                if (request.description.isNullOrEmpty()) {
+                    plant.description = ""
+                }
+                if (request.careInfo.isNullOrEmpty()) {
+                    plant.careInfo = ""
+                }
             }
         }
-
-        // lastWateredDate나 wateringCycleDays가 변경되었으므로 nextWateringDate를 다시 계산하여 업데이트
         plant.nextWateringDate = calculateNextWateringDate(plant.lastWateredDate, plant.wateringCycleDays)
+
+        // 이미지 수정이 있는 경우, 비동기 로직 수행
+        imageFile?.let { newFile ->
+            plant.imageUrl?.let { oldImageFileName ->
+                plantS3UploadService.delete(oldImageFileName)
+            }
+            plant.imageUrl = null
+            plant.imageStatus = "PROCESSING"
+            plantImageProcessingService.uploadAndSetImageUrl(plantId, newFile)
+        }
 
         // 변경된 내용을 DB에 저장합니다. @Transactional에 의해 메서드 종료 시 자동으로 flush 됩니다.
         // 수정된 결과를 다시 DTO로 변환하여 반환합니다.

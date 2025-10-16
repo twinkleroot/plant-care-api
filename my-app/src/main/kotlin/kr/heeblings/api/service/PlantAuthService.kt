@@ -1,5 +1,6 @@
 package kr.heeblings.api.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import kr.heeblings.api.repository.PlantUserRepository
 import kr.heeblings.common.config.JwtTokenProvider
 import kr.heeblings.api.domain.PlantUser
@@ -11,12 +12,15 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClient
 import java.time.LocalDateTime
+import java.util.*
+
 
 @Service
 class PlantAuthService(
     private val plantUserRepository: PlantUserRepository,
     private val jwtTokenProvider: JwtTokenProvider,
-    private val webClient: WebClient
+    private val webClient: WebClient,
+    private val objectMapper: ObjectMapper,
 ) {
     @Value("\${kakao.api.url}")
     private lateinit var kakaoApiUrl: String
@@ -44,6 +48,37 @@ class PlantAuthService(
         return PlantAuthResponse(appToken = appToken, userId = user.userId, nickname = user.nickname)
     }
 
+    @Transactional
+    fun handleKakaoUnlink(jwtPayload: String) {
+        try {
+            val payload = jwtPayload.split('.')[1]
+            val decodedPayload = String(Base64.getUrlDecoder().decode(payload))
+
+            @Suppress("UNCHECKED_CAST")
+            val payloadMap = objectMapper.readValue(decodedPayload, Map::class.java) as Map<String, Any>
+
+            // 카카오의 중첩된 JSON 구조를 올바르게 탐색합니다.
+            val events = payloadMap["events"] as? Map<String, Any>
+            val unlinkEvent = events?.get("https://schemas.openid.net/secevent/oauth/event-type/user-unlinked") as? Map<String, Any>
+            val subject = unlinkEvent?.get("subject") as? Map<String, Any>
+            val kakaoIdString = subject?.get("sub") as? String
+
+            val kakaoId = kakaoIdString?.toLongOrNull()
+
+            if (kakaoId != null) {
+                plantUserRepository.findByKakaoId(kakaoId)?.let {
+                    plantUserRepository.delete(it)
+                    println("사용자(kakaoId: $kakaoId)의 연결 해제로 인한 데이터 삭제 완료.")
+                } ?: println("연결 해제 요청: 사용자(kakaoId: $kakaoId)를 찾을 수 없음.")
+            } else {
+                println("웹훅 페이로드의 events.subject.sub 에서 사용자 ID를 찾을 수 없습니다. Decoded Payload: $decodedPayload")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println("카카오 웹훅 JWT 파싱 실패: ${e.message}")
+        }
+    }
+
     private fun getKakaoUserInfo(accessToken: String): KakaoUserInfoResponse {
         return webClient.get()
             .uri("$kakaoApiUrl/v2/user/me")
@@ -51,19 +86,5 @@ class PlantAuthService(
             .retrieve()
             .bodyToMono(KakaoUserInfoResponse::class.java)
             .block() ?: throw RuntimeException("카카오 사용자 정보를 가져오는데 실패했습니다.")
-    }
-
-    @Transactional
-    fun handleKakaoUnlink(kakaoId: Long) {
-        // 카카오 ID로 사용자를 찾습니다.
-        val user = plantUserRepository.findByKakaoId(kakaoId)
-
-        // 사용자가 존재하면 DB에서 삭제합니다.
-        // DB 스키마에서 Users와 Plants 테이블이 ON DELETE CASCADE로 연결되어 있으므로,
-        // user 레코드가 삭제되면 관련된 모든 plant 레코드도 자동으로 함께 삭제됩니다.
-        user?.let {
-            plantUserRepository.delete(it)
-            println("사용자(kakaoId: $kakaoId)의 연결 해제로 인한 데이터 삭제 완료.")
-        } ?: println("연결 해제 요청: 사용자(kakaoId: $kakaoId)를 찾을 수 없음.")
     }
 }

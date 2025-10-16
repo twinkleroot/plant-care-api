@@ -80,7 +80,7 @@ class NotificationService(
 
             try {
                 val response = FirebaseMessaging.getInstance().send(message)
-                println("이미지 처리 완료 메시지 발송 성공: UserID=${user.userId}, MessageID=$response")
+                println("Image process complete, message send success : UserID=${user.userId}, MessageID=$response")
             } catch (e: Exception) {
                 println("이미지 처리 완료 메시지 발송 실패: UserID=${user.userId}, Error=${e.message}")
             }
