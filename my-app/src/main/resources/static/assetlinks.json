@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.heeblings.plant_care_app",
+      "sha256_cert_fingerprints": [
+        "1E:54:38:70:CE:49:8E:4A:36:F3:1D:FD:B5:C0:18:70:B3:1E:E5:15:77:3F:90:E7:C0:BC:BC:A4:38:77:4D:5C"
+      ]
+    }
+  }
+]

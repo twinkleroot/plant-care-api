@@ -12,13 +12,11 @@ import java.time.Duration
 import java.util.*
 
 @Service
-class PlantS3UploadService(
-    private val s3Template: S3Template
-) {
+class PlantS3UploadService(private val s3Template: S3Template) {
     @Value("\${s3.bucket}")
     private lateinit var bucketName: String
 
-    private val MAX_WIDTH = 1024
+    private val MAX_WIDTH = 480
 
     // 서버에서 이미지 리사이징을 처리하는 로직을 다시 추가합니다.
     fun upload(file: MultipartFile): String {
@@ -29,7 +27,7 @@ class PlantS3UploadService(
         // 이미지 리사이징 로직
         val resizedImageBytes = ByteArrayOutputStream().use { outputStream ->
             Thumbnails.of(file.inputStream)
-                .width(MAX_WIDTH) // 최대 가로 크기를 1024로 제한
+                .width(MAX_WIDTH) // 최대 가로 크기를 480로 제한
                 .outputQuality(0.75) // 품질을 75%로 설정하여 용량 최적화
                 .toOutputStream(outputStream)
             outputStream.toByteArray()

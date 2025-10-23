@@ -8,6 +8,7 @@ import kr.heeblings.api.domain.Plant
 import kr.heeblings.api.dto.*
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -25,8 +26,9 @@ class PlantService(
 ) {
     @Transactional(readOnly = true)
     fun getPlantTypeWikiList(): List<PlantTypeWikiResponse> {
-        // 모든 위키 데이터를 찾아 DTO로 변환하여 반환
-        return plantTypeWikiRepository.findAll().map { wiki ->
+        // 모든 위키 데이터를 'plantTypeName'을 기준으로 오름차순 정렬하여 조회합니다.
+        val sort = Sort.by(Sort.Direction.ASC, "plantTypeName")
+        return plantTypeWikiRepository.findAll(sort).map { wiki ->
             PlantTypeWikiResponse(plantTypeName = wiki.plantTypeName)
         }
     }

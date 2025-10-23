@@ -24,6 +24,9 @@ class SecurityConfig(
                     "/plant-app/webhooks/**",
                     "/plant-app/privacy",
                     "/plant-app/data-deletion",
+                    "/.well-known/assetlinks.json",
+                    "/app-ads.txt",
+                    "/robots.txt",
                     "/health"
                 ).permitAll()
                     .anyRequest().authenticated()
