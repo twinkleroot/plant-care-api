@@ -24,6 +24,8 @@ class SecurityConfig(
                     "/plant-app/webhooks/**",
                     "/plant-app/privacy",
                     "/plant-app/data-deletion",
+                    "/routine-manager-app/privacy",
+                    "/routine-manager-app/account-deletion",
                     "/.well-known/assetlinks.json",
                     "/app-ads.txt",
                     "/robots.txt",
