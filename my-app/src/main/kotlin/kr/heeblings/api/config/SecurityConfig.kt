@@ -26,6 +26,8 @@ class SecurityConfig(
                     "/plant-app/data-deletion",
                     "/routine-manager-app/privacy",
                     "/routine-manager-app/account-deletion",
+                    "/parent-helper-app/privacy",
+                    "/parent-helper-app/account-deletion",
                     "/.well-known/assetlinks.json",
                     "/app-ads.txt",
                     "/robots.txt",

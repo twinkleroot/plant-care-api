@@ -25,5 +25,5 @@ class RoutinePushMessage(
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
-    var createdAt: LocalDateTime? = null
+    val createdAt: LocalDateTime = LocalDateTime.now()
 )

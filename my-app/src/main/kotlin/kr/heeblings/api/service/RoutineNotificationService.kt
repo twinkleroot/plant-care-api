@@ -1,5 +1,7 @@
 package kr.heeblings.api.service
 
+import com.google.firebase.FirebaseApp
+import kr.heeblings.api.config.FirebaseConfig
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
 import com.google.firebase.messaging.Notification
@@ -20,8 +22,7 @@ class RoutineNotificationService(
     /**
      * 매일 저녁 6시 (18:00 KST)에 루틴 앱 알림 실행
      */
-//    @Scheduled(cron = "0 0 18 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 */3 * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 18 * * *", zone = "Asia/Seoul")
     fun sendDailyRoutineReminder() {
         val today = LocalDate.now()
         log.info("[$today] 루틴 관리 앱 저녁 6시 전체 알림 스케줄러 실행...")
@@ -42,8 +43,11 @@ class RoutineNotificationService(
 
         try {
             // FCM으로 메시지 전송
-            val response = FirebaseMessaging.getInstance().send(message)
-            log.info("루틴 앱 전체 알림 발송 성공: Topic=$ROUTINE_TOPIC, MessageID=$response")
+            val routineFirebaseApp = FirebaseApp.getInstance(FirebaseConfig.ROUTINE_APP_NAME)
+            // 해당 앱의 FirebaseMessaging 인스턴스를 가져옵니다.
+            val fcm = FirebaseMessaging.getInstance(routineFirebaseApp)
+            val response = fcm.send(message)
+            log.info("[routine-manager] all notice message send success: Topic=$ROUTINE_TOPIC, MessageID=$response")
 
             // 발송 내역 로깅
             val pushMessage = RoutinePushMessage(
@@ -54,7 +58,7 @@ class RoutineNotificationService(
             pushMessageRepository.save(pushMessage)
 
         } catch (e: Exception) {
-            log.error("루틴 앱 전체 알림 발송 실패: Topic=$ROUTINE_TOPIC, Error=${e.message}")
+            log.error("[routine-manager] all notice message send failed: Topic=$ROUTINE_TOPIC, Error=${e.message}")
         }
     }
 }

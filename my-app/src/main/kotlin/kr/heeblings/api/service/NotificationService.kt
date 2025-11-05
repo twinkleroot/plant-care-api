@@ -1,5 +1,7 @@
 package kr.heeblings.api.service
 
+import com.google.firebase.FirebaseApp // import 추가
+import kr.heeblings.api.config.FirebaseConfig // Config 클래스 import
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
 import com.google.firebase.messaging.Notification
@@ -51,8 +53,15 @@ class NotificationService(
                     .build()
 
                 try {
-                    val response = FirebaseMessaging.getInstance().send(message)
+                    // "plantApp" 이름으로 초기화된 FirebaseApp 인스턴스를 가져옵니다.
+                    val plantFirebaseApp = FirebaseApp.getInstance(FirebaseConfig.PLANT_APP_NAME)
+                    // 해당 앱의 FirebaseMessaging 인스턴스를 가져옵니다.
+                    val fcm = FirebaseMessaging.getInstance(plantFirebaseApp)
+                    val response = fcm.send(message) // plantApp의 fcm으로 발송
                     log.info("알림 발송 성공: UserID=${user.userId}, MessageID=$response")
+
+//                    val response = FirebaseMessaging.getInstance().send(message)
+//                    log.info("[plant-care] all notice message send success: UserID=${user.userId}, MessageID=$response")
 
                     val pushMessage = PlantPushMessage(
                         user = user,
@@ -61,7 +70,7 @@ class NotificationService(
                     )
                     pushMessageRepository.save(pushMessage)
                 } catch (e: Exception) {
-                    log.error("알림 발송 실패: UserID=${user.userId}, Token=$token, Error=${e.message}")
+                    log.error("[plant-care] all notice message send failed: UserID=${user.userId}, Token=$token, Error=${e.message}")
                     // TODO: 실패한 토큰은 DB에서 삭제하는 등의 후처리 로직 추가 가능
                 }
             }
