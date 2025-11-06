@@ -20,6 +20,7 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
                 it.requestMatchers(
+                    "/",
                     "/plant-app/auth/**",
                     "/plant-app/webhooks/**",
                     "/plant-app/privacy",
