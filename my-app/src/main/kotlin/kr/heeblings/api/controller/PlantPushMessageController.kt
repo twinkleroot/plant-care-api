@@ -23,13 +23,18 @@ class PlantPushMessageController(
     @GetMapping("/unread-status")
     fun hasUnreadMessages(principal: Principal): ResponseEntity<Map<String, Boolean>> {
         val userId = principal.name.toLong()
-        val hasUnread = pushMessageService.hasUnreadMessages(userId)
+        val messages = pushMessageService.getRecentMessages(userId)
+        // 최근 메시지 중 읽지 않은 것이 하나라도 있는지 확인
+        val hasUnread = messages.isNotEmpty()
         return ResponseEntity.ok(mapOf("hasUnread" to hasUnread))
     }
 
     // 메시지 확인(읽음) 처리
     @PutMapping("/{messageId}/read")
-    fun markAsRead(principal: Principal, @PathVariable messageId: Long): ResponseEntity<PlantPushMessage> {
+    fun markAsRead(
+        principal: Principal,
+        @PathVariable messageId: String
+    ): ResponseEntity<PlantPushMessage> {
         val userId = principal.name.toLong()
         val message = pushMessageService.markAsRead(userId, messageId)
         return ResponseEntity.ok(message)
@@ -37,7 +42,10 @@ class PlantPushMessageController(
 
     // 메시지 삭제
     @DeleteMapping("/{messageId}")
-    fun deleteMessage(principal: Principal, @PathVariable messageId: Long): ResponseEntity<Void> {
+    fun deleteMessage(
+        principal: Principal,
+        @PathVariable messageId: String
+    ): ResponseEntity<Void> {
         val userId = principal.name.toLong()
         pushMessageService.deleteMessage(userId, messageId)
         return ResponseEntity.noContent().build()

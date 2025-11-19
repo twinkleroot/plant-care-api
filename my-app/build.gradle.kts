@@ -23,7 +23,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+//    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     // AWS S3 연동을 위한 Spring Cloud AWS Starter
     implementation(platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1"))
@@ -34,7 +34,7 @@ dependencies {
 
     implementation(project(":common"))
     implementation("com.google.firebase:firebase-admin:9.2.0")
-    runtimeOnly("com.mysql:mysql-connector-j")
+//    runtimeOnly("com.mysql:mysql-connector-j")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 }
 

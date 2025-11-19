@@ -21,6 +21,8 @@ class SecurityConfig(
             .authorizeHttpRequests {
                 it.requestMatchers(
                     "/",
+                    "/church/**",
+                    "/migration/**",
                     "/plant-app/auth/**",
                     "/plant-app/webhooks/**",
                     "/plant-app/privacy",

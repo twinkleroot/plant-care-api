@@ -5,17 +5,13 @@ import kr.heeblings.api.config.FirebaseConfig
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
 import com.google.firebase.messaging.Notification
-import kr.heeblings.api.domain.RoutinePushMessage
-import kr.heeblings.api.repository.RoutinePushMessageRepository
 import kr.heeblings.common.utils.log
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 
 @Service
-class RoutineNotificationService(
-    private val pushMessageRepository: RoutinePushMessageRepository
-) {
+class RoutineNotificationService {
     // 루틴 앱 사용자가 구독할 토픽 이름
     private val ROUTINE_TOPIC = "routine_daily_reminder"
 
@@ -50,12 +46,13 @@ class RoutineNotificationService(
             log.info("[routine-manager] all notice message send success: Topic=$ROUTINE_TOPIC, MessageID=$response")
 
             // 발송 내역 로깅
-            val pushMessage = RoutinePushMessage(
-                topic = ROUTINE_TOPIC,
-                title = title,
-                body = body
-            )
-            pushMessageRepository.save(pushMessage)
+//            val pushMessage = RoutinePushMessage(
+//                topic = ROUTINE_TOPIC,
+//                title = title,
+//                body = body
+//            )
+//            // TODO : 발송 내역 로깅을 firebase에 하도록 수정
+//            pushMessageRepository.save(pushMessage)
 
         } catch (e: Exception) {
             log.error("[routine-manager] all notice message send failed: Topic=$ROUTINE_TOPIC, Error=${e.message}")

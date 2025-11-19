@@ -1,20 +1,13 @@
 package kr.heeblings.api.domain
 
-import jakarta.persistence.*
 import java.time.LocalDateTime
+import java.time.ZoneId
 
-@Entity
-@Table(name = "plant_users") // 테이블명을 users -> plant_users로 변경
-class PlantUser(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+data class PlantUser(
     val userId: Long = 0,
-
-    @Column(unique = true, nullable = false)
     val kakaoId: Long,
-
     var nickname: String?,
-
     var fcmToken: String?,
-
-    var updatedAt: LocalDateTime = LocalDateTime.now(),
+    val createdAt: LocalDateTime = LocalDateTime.now(ZoneId.of("Asia/Seoul")),
+    var updatedAt: LocalDateTime = LocalDateTime.now(ZoneId.of("Asia/Seoul")),
 )

@@ -1,10 +1,13 @@
 package kr.heeblings.api.config
 
 import com.google.auth.oauth2.GoogleCredentials
+import com.google.cloud.firestore.Firestore
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
+import com.google.firebase.cloud.FirestoreClient
 import kr.heeblings.common.utils.log
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.Resource
 import java.io.IOException
@@ -57,5 +60,11 @@ class FirebaseConfig {
             log.error("Failed to initialize Firebase Apps: ${e.message}", e)
             throw IllegalStateException("Firebase App initialization failed", e)
         }
+    }
+
+    @Bean
+    fun firestore(): Firestore {
+        // 이미 초기화된 FirebaseApp에서 Firestore 인스턴스를 가져와 Bean으로 등록
+        return FirestoreClient.getFirestore(FirebaseApp.getInstance(PLANT_APP_NAME))
     }
 }
