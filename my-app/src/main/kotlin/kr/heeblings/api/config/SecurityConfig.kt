@@ -25,6 +25,7 @@ class SecurityConfig(
                     "/migration/**",
                     "/plant-app/auth/**",
                     "/plant-app/webhooks/**",
+                    "/plant-app/system/**",
                     "/plant-app/privacy",
                     "/plant-app/data-deletion",
                     "/routine-manager-app/privacy",

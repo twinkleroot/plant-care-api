@@ -5,6 +5,7 @@ import com.google.cloud.firestore.Query
 import com.google.cloud.firestore.SetOptions
 import kr.heeblings.api.domain.PlantPushMessage
 import kr.heeblings.api.domain.PlantUser
+import kr.heeblings.api.dto.NoticeConfig
 import kr.heeblings.common.utils.log
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -12,6 +13,8 @@ import java.time.ZoneId
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import kr.heeblings.api.dto.PlantWikiResponse
+import kr.heeblings.api.dto.SystemConfigResponse
+import kr.heeblings.api.dto.UpdateConfig
 import kr.heeblings.api.exception.ResourceNotFoundException
 import java.time.LocalDateTime
 
@@ -24,6 +27,7 @@ class PlantFirestoreService (
     private val PLANTS_COLLECTION = "plants"
     private val WIKI_COLLECTION = "plantWiki"
     private val PUSH_MESSAGES_COLLECTION = "pushMessages"
+    private val SYSTEM_COLLECTION = "system" // 시스템 설정용 컬렉션
 
     // ----------------------------------------------------
     // 인증 및 사용자 관리
@@ -169,13 +173,20 @@ class PlantFirestoreService (
     /**
      * 식물 리스트를 Firestore에서 조회합니다.
      */
-    fun findPlantList(userId: String, page: Int, size: Int, sortField: String = "createdAt", isAsc: Boolean = false): List<Map<String, Any?>> {
+    fun findPlantList(userId: String, page: Int, size: Int, sortField: String, isAsc: Boolean): List<Map<String, Any?>> {
         val query = firestore.collection(USERS_COLLECTION).document(userId).collection(PLANTS_COLLECTION)
+
+        val targetField = when (sortField) {
+            "plantId" -> "createdAt" // ID 정렬은 생성일 정렬로 대체
+            "nextWateringDate" -> "nextWateringDateMillis" // 타임스탬프 필드 사용
+            "startDate" -> "startDate"
+            else -> "createdAt"
+        }
 
         val direction = if (isAsc) Query.Direction.ASCENDING else Query.Direction.DESCENDING
 
         val result = query
-            .orderBy(sortField, direction)
+            .orderBy(targetField, direction)
             .offset(page * size)
             .limit(size)
             .get()
@@ -219,6 +230,57 @@ class PlantFirestoreService (
         }
 
         plantDoc.update(updates).get(10, TimeUnit.SECONDS)
+    }
+
+    // ----------------------------------------------------
+    // 시스템 설정 (팝업 등)
+    // ----------------------------------------------------
+
+    /**
+     * 시스템 설정(버전, 공지사항) 조회
+     * Firestore 경로: system/config 문서
+     */
+    fun getSystemConfig(): SystemConfigResponse {
+        val doc = firestore.collection(SYSTEM_COLLECTION).document("config").get().get(5, TimeUnit.SECONDS)
+
+        if (!doc.exists()) {
+            return SystemConfigResponse(null, null, null)
+        }
+
+        val data = doc.data ?: return SystemConfigResponse(null, null, null)
+
+        // 강제 업데이트 설정 파싱
+        val forceUpdateMap = data["forceUpdate"] as? Map<String, String>
+        val forceUpdate = if (forceUpdateMap != null) {
+            UpdateConfig(
+                version = forceUpdateMap["version"] ?: "0.0.0",
+                startDate = forceUpdateMap["startDate"] ?: "",
+                endDate = forceUpdateMap["endDate"] ?: ""
+            )
+        } else null
+
+        // 업데이트 안내 설정 파싱
+        val updateNoticeMap = data["updateNotice"] as? Map<String, String>
+        val updateNotice = if (updateNoticeMap != null) {
+            UpdateConfig(
+                version = updateNoticeMap["version"] ?: "0.0.0",
+                startDate = updateNoticeMap["startDate"] ?: "",
+                endDate = updateNoticeMap["endDate"] ?: ""
+            )
+        } else null
+
+        // 공지사항 설정 파싱
+        val noticeMap = data["notice"] as? Map<String, String>
+        val notice = if (noticeMap != null) {
+            NoticeConfig(
+                title = noticeMap["title"] ?: "",
+                content = noticeMap["content"] ?: "",
+                startDate = noticeMap["startDate"] ?: "",
+                endDate = noticeMap["endDate"] ?: ""
+            )
+        } else null
+
+        return SystemConfigResponse(forceUpdate, updateNotice, notice)
     }
 
     /**

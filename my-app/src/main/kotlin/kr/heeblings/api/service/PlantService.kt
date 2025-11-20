@@ -19,17 +19,20 @@ class PlantService(
         return firestoreService.getPlantWikiList()
     }
 
-    fun getPlantList(userId: Long, page: Int, size: Int): List<PlantListResponse> {
+    fun getPlantList(userId: Long, page: Int, size: Int, sort: String): List<PlantListResponse> {
         val userIdString = userId.toString()
-        // 기본 정렬: 생성일 내림차순
-        val plantMaps = firestoreService.findPlantList(userIdString, page, size, "createdAt", false)
+
+        // sort 문자열 파싱 (예: "plantId,desc" -> field="plantId", isAsc=false)
+        val sortParts = sort.split(",")
+        val sortField = sortParts.getOrElse(0) { "createdAt" }
+        val sortDirection = sortParts.getOrElse(1) { "desc" }
+        val isAsc = sortDirection.equals("asc", ignoreCase = true)
+
+        val plantMaps = firestoreService.findPlantList(userIdString, page, size, sortField, isAsc)
 
         return plantMaps.map { plantMap ->
             val plantListResponse = PlantListResponse.fromFirestoreMap(plantMap)
-
-            // Pre-signed URL 생성
             val preSignedUrl = plantListResponse.imageUrl?.let { plantS3UploadService.generatePreSignedUrl(it) }
-
             plantListResponse.copy(imageUrl = preSignedUrl)
         }
     }
@@ -79,8 +82,6 @@ class PlantService(
         val existingPlant = firestoreService.findPlantById(userIdString, plantIdString)
             ?: throw ResourceNotFoundException("ID가 ${plantIdString}인 식물을 찾을 수 없습니다.")
 
-        // (Firestore 구조상 path에 userId가 포함되므로 소유권 불일치는 조회 실패로 나타남. 별도 검사 불필요)
-
         val updates = mutableMapOf<String, Any?>()
 
         // 2. 텍스트 정보 업데이트
@@ -94,7 +95,6 @@ class PlantService(
 
         val newPlantType = request.plantType
         val oldPlantType = existingPlant["plantType"] as? String
-
         var wateringCycleDays = (existingPlant["wateringCycleDays"] as? Long)?.toInt()
 
         if (newPlantType != null && newPlantType != oldPlantType) {
@@ -122,6 +122,9 @@ class PlantService(
             updates["nextWateringDateMillis"] = nextWatering?.atStartOfDay(ZoneId.of("Asia/Seoul"))?.toInstant()?.toEpochMilli()
         }
 
+        // 5. 이미지 처리 로직 (수정됨)
+        val oldImageUrl = existingPlant["imageUrl"] as? String
+
         // 5. 이미지 수정 처리
         if (imageFile != null) {
             // 기존 이미지 삭제 (S3 URL이 있는 경우)
@@ -133,6 +136,15 @@ class PlantService(
 
             // 비동기 업로드 시작
             plantImageProcessingService.uploadAndSetImageUrl(userIdString, plantIdString, imageFile)
+        }
+        // Case B: 이미지를 삭제하겠다고 요청한 경우 (새 이미지 없음)
+        else if (request.isImageDeleted == true) {
+            // 기존 이미지 삭제
+            oldImageUrl?.let { plantS3UploadService.delete(it) }
+
+            // DB 정보 초기화
+            updates["imageUrl"] = null
+            updates["imageStatus"] = "COMPLETE" // 처리 완료 상태로 설정
         }
 
         // 6. Firestore 업데이트 실행

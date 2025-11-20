@@ -136,7 +136,10 @@ data class PlantUpdateRequest(
     val description: String?,
 
     @field:Size(max = 200, message = "관리 방법은 200자 이내로 입력해주세요.")
-    val careInfo: String?
+    val careInfo: String?,
+
+    // 이미지 삭제 여부 플래그
+    val isImageDeleted: Boolean? = false,
 )
 
 // 식물 등록 요청 DTO

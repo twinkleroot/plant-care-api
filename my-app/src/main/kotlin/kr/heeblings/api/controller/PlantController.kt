@@ -27,11 +27,12 @@ class PlantController(
     @GetMapping
     fun getPlantList(
         principal: Principal,
-        @RequestParam(defaultValue = "0") page: Int, // ❗️ Pageable 대신 Int 사용
-        @RequestParam(defaultValue = "20") size: Int
-    ): ResponseEntity<List<PlantListResponse>> { // ❗️ Page<> 대신 List<> 반환
+        @RequestParam(defaultValue = "0") page: Int, // Pageable 대신 Int 사용
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "plantId,desc") sort: String // 정렬 파라미터
+    ): ResponseEntity<List<PlantListResponse>> { // Page<> 대신 List<> 반환
         val userId = principal.name.toLong()
-        val plantList = plantService.getPlantList(userId, page, size)
+        val plantList = plantService.getPlantList(userId, page, size, sort)
         return ResponseEntity.ok(plantList)
     }
 
