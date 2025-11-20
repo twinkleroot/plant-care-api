@@ -4,10 +4,11 @@ import kr.heeblings.api.service.PlantService
 import jakarta.validation.Valid
 import kr.heeblings.api.dto.*
 import kr.heeblings.api.service.PlantImageProcessingService
-import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.io.File
 import java.security.Principal
 
 @RestController
@@ -44,28 +45,46 @@ class PlantController(
         return ResponseEntity.ok(plantDetail)
     }
 
-    @PostMapping(consumes = ["multipart/form-data"]) // multipart/form-data 타입만 허용
+    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun createPlant(
         principal: Principal,
         @RequestPart("request") @Valid request: PlantCreateRequest,
-        @RequestPart("image", required = false) imageFile: MultipartFile?
+        @RequestPart("image", required = false) imageFile: MultipartFile?,
     ): ResponseEntity<PlantDetailResponse> {
         val userId = principal.name.toLong()
-        val createdPlant = plantService.createPlant(userId, request, imageFile)
-        // 성공적으로 생성되었음을 의미하는 201 Created 상태 코드와 함께 생성된 리소스를 반환합니다.
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdPlant)
+
+        // MultipartFile이 있으면 임시 파일로 변환, 없으면 null 전달
+        val tempFile = imageFile?.let {
+            val file = File.createTempFile("upload_", "_${it.originalFilename}")
+            it.transferTo(file)
+            file
+        }
+
+        val result = plantService.createPlant(userId, request, tempFile)
+        return ResponseEntity.ok(result)
     }
 
-    @PutMapping("/{plantId}", consumes = ["multipart/form-data"])
+    @PutMapping(
+        value = ["/{plantId}"],
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
+    )
     fun updatePlant(
         principal: Principal,
         @PathVariable plantId: String,
         @RequestPart("request") request: PlantUpdateRequest,
-        @RequestPart("image", required = false) imageFile: MultipartFile?
+        @RequestPart("image", required = false) imageFile: MultipartFile?,
     ): ResponseEntity<PlantDetailResponse> {
         val userId = principal.name.toLong()
-        val updatedPlant = plantService.updatePlant(userId, plantId, request, imageFile)
-        return ResponseEntity.ok(updatedPlant)
+
+        // MultipartFile이 있으면 임시 파일로 변환
+        val tempFile = imageFile?.let {
+            val file = File.createTempFile("upload_", "_${it.originalFilename}")
+            it.transferTo(file)
+            file
+        }
+
+        val result = plantService.updatePlant(userId, plantId, request, tempFile)
+        return ResponseEntity.ok(result)
     }
 
     @PutMapping("/{plantId}/water")
@@ -74,8 +93,8 @@ class PlantController(
         @PathVariable plantId: String
     ): ResponseEntity<PlantDetailResponse> {
         val userId = principal.name.toLong()
-        val updatedPlant = plantService.waterPlant(userId, plantId)
-        return ResponseEntity.ok(updatedPlant)
+        val result = plantService.waterPlant(userId, plantId)
+        return ResponseEntity.ok(result)
     }
 
     @DeleteMapping("/{plantId}")
@@ -93,7 +112,10 @@ class PlantController(
      * 이미지 등록/수정 요청을 받아 비동기로 처리합니다.
      * 클라이언트는 이미지와 함께 식물 ID를 전달합니다.
      */
-    @PostMapping("/image-upload/{plantId}")
+    @PostMapping(
+        value = ["/image-upload/{plantId}"],
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
+    )
     fun uploadPlantImage(
         principal: Principal,
         @PathVariable plantId: String, // Firestore ID (String)
@@ -101,8 +123,12 @@ class PlantController(
     ): ResponseEntity<Void> {
         val userId = principal.name.toLong().toString() // 카카오 ID (String)
 
+        // 임시 파일 생성 로직 (기존 유지)
+        val tempFile = File.createTempFile("upload_", "_${imageFile.originalFilename}")
+        imageFile.transferTo(tempFile)
+
         // 비동기 서비스 호출 (리사이징 및 S3 업로드)
-        plantImageProcessingService.uploadAndSetImageUrl(userId, plantId, imageFile)
+        plantImageProcessingService.uploadAndSetImageUrl(userId, plantId, tempFile)
 
         // 클라이언트에게 즉시 200 OK 응답을 반환합니다.
         return ResponseEntity.ok().build()

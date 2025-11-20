@@ -4,7 +4,7 @@ import kr.heeblings.api.domain.Plant
 import kr.heeblings.api.dto.*
 import kr.heeblings.api.exception.ResourceNotFoundException
 import org.springframework.stereotype.Service
-import org.springframework.web.multipart.MultipartFile
+import java.io.File
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.*
@@ -51,7 +51,7 @@ class PlantService(
         return plantDetail.copy(imageUrl = preSignedUrl)
     }
 
-    fun createPlant(userId: Long, request: PlantCreateRequest, imageFile: MultipartFile?): PlantDetailResponse {
+    fun createPlant(userId: Long, request: PlantCreateRequest, imageFile: File?): PlantDetailResponse {
         val userIdString = userId.toString()
 
         val wiki = request.plantType?.let { firestoreService.findWikiByTypeName(it) }
@@ -72,10 +72,10 @@ class PlantService(
         return getPlantDetail(userId, plantIdString)
     }
 
-    fun updatePlant(userId: Long, plantIdString: String, request: PlantUpdateRequest, imageFile: MultipartFile?): PlantDetailResponse {
+    fun updatePlant(userId: Long, plantIdString: String, request: PlantUpdateRequest, imageFile: File?): PlantDetailResponse {
         val userIdString = userId.toString()
 
-        // 1. 기존 정보 확인 (소유권 검증용)
+        // 1. 기존 정보 확인 (존재 여부 및 소유권은 Firestore Path 구조상 자동 확인됨)
         val existingPlant = firestoreService.findPlantById(userIdString, plantIdString)
             ?: throw ResourceNotFoundException("ID가 ${plantIdString}인 식물을 찾을 수 없습니다.")
 

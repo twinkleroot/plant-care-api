@@ -5,9 +5,9 @@ import kr.heeblings.common.utils.log
 import net.coobird.thumbnailator.Thumbnails
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.springframework.web.multipart.MultipartFile
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.time.Duration
 import java.util.*
 
@@ -19,14 +19,14 @@ class PlantS3UploadService(private val s3Template: S3Template) {
     private val MAX_WIDTH = 480
 
     // 서버에서 이미지 리사이징을 처리하는 로직을 다시 추가합니다.
-    fun upload(file: MultipartFile): String {
-        val originalFilename = file.originalFilename ?: "image.jpg"
-        val extension = originalFilename.substringAfterLast(".", "")
+    fun upload(file: File): String {
+        val originalFilename = file.name
+        val extension = originalFilename.substringAfterLast(".", "jpg")
         val randomFileName = "${UUID.randomUUID()}.$extension"
 
         // 이미지 리사이징 로직
         val resizedImageBytes = ByteArrayOutputStream().use { outputStream ->
-            Thumbnails.of(file.inputStream)
+            Thumbnails.of(file)
                 .width(MAX_WIDTH) // 최대 가로 크기를 480로 제한
                 .outputQuality(0.75) // 품질을 75%로 설정하여 용량 최적화
                 .toOutputStream(outputStream)

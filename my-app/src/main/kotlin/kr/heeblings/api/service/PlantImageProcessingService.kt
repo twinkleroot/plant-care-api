@@ -3,7 +3,7 @@ package kr.heeblings.api.service
 import kr.heeblings.common.utils.log
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
-import org.springframework.web.multipart.MultipartFile
+import java.io.File
 
 @Service
 class PlantImageProcessingService(
@@ -13,7 +13,7 @@ class PlantImageProcessingService(
 ) {
 
     @Async // 이 메서드는 별도의 스레드에서 비동기적으로 실행됩니다.
-    fun uploadAndSetImageUrl(userId: String, plantId: String, file: MultipartFile) {
+    fun uploadAndSetImageUrl(userId: String, plantId: String, file: File) {
         try {
             // 1. 시간이 오래 걸리는 리사이징 및 S3 업로드 수행
             val imageFileName = plantS3UploadService.upload(file)
@@ -28,6 +28,13 @@ class PlantImageProcessingService(
             // FirestoreService를 통해 ImageStatus를 FAILED로 업데이트
             firestoreService.updatePlantImageStatus(userId, plantId, null, "FAILED")
             log.error("비동기 이미지 업로드 실패: plantId = {}, error: {}", plantId, e.message, e)
+        } finally {
+            // [중요] 비동기 작업이 끝나면(성공하든 실패하든) 서버에 임시로 만든 파일을 반드시 삭제해야 합니다.
+            // 삭제하지 않으면 디스크 용량이 가득 찰 수 있습니다.
+            if (file.exists()) {
+                file.delete()
+                log.debug("Temporary file deleted: {}", file.name)
+            }
         }
     }
 }

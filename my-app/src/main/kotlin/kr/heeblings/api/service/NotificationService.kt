@@ -15,11 +15,11 @@ class NotificationService (
     private val firestoreService: PlantFirestoreService,
 ) {
     // 매일 오전 9시 (KST 기준)에 실행
-//    @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
     // 테스트를 위해 5분마다 실행
 //    @Scheduled(cron = "0 */5 * * * *", zone = "Asia/Seoul")
     // 테스트를 위해 1분 마다 실행
-    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
+//    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
     fun sendWateringReminders() {
         val today = LocalDate.now()
         log.info("[$today] 물주기 알림 스케줄러 실행...")
