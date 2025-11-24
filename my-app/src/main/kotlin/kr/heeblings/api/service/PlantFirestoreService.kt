@@ -294,7 +294,7 @@ class PlantFirestoreService (
         // 참고: 이 쿼리를 실행할 때 "The query requires an index" 에러가 또 발생할 수 있습니다.
         // 그럴 경우 에러 로그에 나오는 URL을 클릭하여 'nextWateringDateMillis'에 대한 단일 필드 인덱스(Collection Group용)를 생성해주세요.
         val query = firestore.collectionGroup(PLANTS_COLLECTION)
-            .whereLessThanOrEqualTo("nextWateringDate", todayStart)
+            .whereLessThanOrEqualTo("nextWateringDateMillis", todayStart)
 //            .whereGreaterThan("fcmToken", "") // FCM 토큰이 있는 사용자만 필터링
             .limit(500) // 대량 처리를 위해 제한
             .get()
@@ -306,8 +306,8 @@ class PlantFirestoreService (
             val userId = plantDoc.reference.parent.parent?.id // users/{uid}/plants/{pid} 구조에서 uid를 추출
 
             // 사용자의 모든 정보를 Firestore에서 다시 조회 (최신 토큰 정보 포함)
-            val userDoc = userId?.let { firestore.collection(USERS_COLLECTION).document(it).get().get(5, TimeUnit.SECONDS) }
-            if (userDoc != null) {
+            if (userId != null && !userMap.containsKey(userId)) {
+                val userDoc = firestore.collection(USERS_COLLECTION).document(userId).get().get(5, TimeUnit.SECONDS)
                 if (userDoc.exists()) {
                     val fcmToken = userDoc.getString("fcmToken")
                     val kakaoId = userId.toLongOrNull()
