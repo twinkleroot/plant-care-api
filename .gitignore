@@ -5,6 +5,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+/my-app/src/main/resources/my-plant-care-0202-firebase.json
+/my-app/src/main/resources/routine-manager-firebase.json
+
 ### STS ###
 .apt_generated
 .classpath
